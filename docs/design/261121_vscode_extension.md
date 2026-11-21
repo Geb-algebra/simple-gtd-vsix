@@ -1,6 +1,6 @@
 # Simple GTD の VS Code 拡張
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-21
 
 ## 目的
@@ -31,33 +31,21 @@ Inbox からの振り分け・完了・プロジェクト化、Inbox の Undo・
 **VS Code のサイドバーでは既存の `spa/` を使う。**
 Inbox・TODOs・TADAs は実装済みの[縦並びパネル](261121_sidebar_panels.md)で切り替える。
 
-## 重要な代替案
-
-### Markdown のチェックリスト
-
-- 対応する決定: [Markdown の保存形式](#markdown-の保存形式)
-- Alternative: Markdown のチェックボックスで未完了と完了を記録する。
-- 棄却根拠: 保存形式は通常の箇条書きに統一することが決まった。完了済み項目はログへの所属で表す。
-
-## 未決事項
-
-### 実装した試作と検証
+#### 実装と検証
 
 **Webview には既存の SPA の画面を載せ、拡張ホストが Markdown と Project コマンドを扱う。**
 画面遷移には React Router のメモリルーターを使い、表示中のパスは Webview の状態に保持する。
 拡張ホストはファイル内容と版を照合して保存し、途中失敗時の復元と、外部編集による再読み込みを扱う。
-接続方式と操作感は VS Code での利用を経て決める。
 
-**試作は VSIX から導入できる。**
-専用 worktree で `spa/` の依存関係を `bun install --frozen-lockfile` で揃え、`extension/` で `bun run package` を実行すると `simple-gtd-0.0.1.vsix` を生成する。
+**開発中は F5 で拡張を起動し、配布時は VSIX から導入できる。**
+ルートを VS Code で開き、`Run Simple GTD` を開始すると、ビルド後に `test/` を開いた Extension Development Host が起動する。
+`spa/` の依存関係を `bun install --frozen-lockfile` で揃え、`extension/` で `bun run package` を実行すると `simple-gtd-0.0.1.vsix` を生成する。
 
 **試作のビルドと主要な操作を VS Code Desktop で検証した。**
 ブラウザ版と拡張版のビルド、型チェック、lint、テスト 14 件が通った。
 Linux arm64 の VS Code 1.147.0 の隔離プロファイルに VSIX を導入し、Inbox の追加・振り分け・完了・Undo/Redo、Project コマンド、分類間ドラッグ、名前の編集、後回し、ヒートマップ、直接編集の反映と再起動時の画面復元を確認した。
 
-### 実装内容と完了条件
-
-#### 1. サイドバーと SPA の接続
+#### サイドバーと SPA の接続
 
 **拡張ホストがサイドバーとファイル操作を担当し、Webview に載せた SPA が入力と表示を担当する。**
 拡張本体とマニフェストは `extension/` に置き、Activity Bar の Simple GTD ビューコンテナーに `WebviewViewProvider` を登録する。
@@ -84,7 +72,7 @@ CSP は読み込み元を絞り、インラインの起動スクリプトが必�
 ブラウザでは既存の `/`、`/tasks`、`/next`、`/log` を使う。
 [VS Code Webview API](https://code.visualstudio.com/api/extension-guides/webview)
 
-#### 2. Markdown の保存と同期
+#### Markdown の保存と同期
 
 **既存の `tasks/` との衝突を避けるため、選択したワークスペースフォルダー直下の `_tasks/` を保存先にする。**
 単一フォルダーではそのフォルダーを使い、複数フォルダーでは対象を選択できるようにする。
@@ -120,7 +108,7 @@ Ctrl/Cmd+Z と Ctrl/Cmd+Shift+Z を既存の Inbox 操作からホストに届�
 試作では履歴をフォルダー単位で最大 50 件、ホストのセッション内に保持し、外部編集や分類済みカードの変更で無効化する。
 後回し順もホストのセッション内で扱い、日付変更時に解除する。
 
-#### 3. GTD 操作と Project コマンド
+#### GTD 操作と Project コマンド
 
 **既存 SPA の操作をホストで実行し、保存成功時にカードの移動を確定する。**
 Inbox の Enter は Next Actions、右は担当者入力後に Waiting for、左は日付入力後に Do at、左の空欄確定は Someday、下は完了に対応する。
@@ -144,7 +132,7 @@ Project の外部処理はコマンド側が所有し、この操作は Inbox �
 VS Code 版の分類は IDEA の四つを使い、ブラウザ試用版の Project 分類はブラウザの保存処理で扱う。
 [VS Code API](https://code.visualstudio.com/api/references/vscode-api)
 
-#### 4. 完了条件
+#### 完了条件
 
 **試作の完了条件は、起動から配布までを通して確認する。**
 
@@ -157,6 +145,16 @@ VS Code 版の分類は IDEA の四つを使い、ブラウザ試用版の Proje
 | 配布用ビルドと VSIX | SPA の既存テストと型チェック、拡張ホストの結合テストを通す。生成 VSIX を別の VS Code プロファイルに入れ、開発サーバーなしで保存からログ表示まで確認する。 |
 
 **初版はデスクトップ版 VS Code のローカルワークスペースを検証対象とする。**
-Project コマンドの引数と成功条件、後回しと履歴の保持期間は、この計画で置いた初版案である。
 試作マニフェストの `engines.vscode` は `^1.85.0` としている。
-最低バージョンでの実機確認は残っている。
+
+## 重要な代替案
+
+### Markdown のチェックリスト
+
+- 対応する決定: [Markdown の保存形式](#markdown-の保存形式)
+- Alternative: Markdown のチェックボックスで未完了と完了を記録する。
+- 棄却根拠: 保存形式は通常の箇条書きに統一することが決まった。完了済み項目はログへの所属で表す。
+
+## 未決事項
+
+VS Code の最低対応バージョン 1.85.0 での実機確認が残っている。
