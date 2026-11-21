@@ -1,10 +1,10 @@
 # Simple GTD
 
-A VSCode Extension that manage personal tasks in a simple GTD manner as standard markdown checklists.
+A VSCode Extension that manages personal tasks in a simple GTD manner using plain Markdown bullet lists.
 
 ## Highlights
 
-- Tool-agnostic data format: Tasks are described as markdown checklists.
+- Tool-agnostic data format: Inbox items, classified tasks, and completed tasks are stored as plain Markdown list items (`- Task name`).
 - Simple: Focused on providing "what you should do next". No due dates, assignee, priorities or other metadata.
 - Rich UI: provides a rich UI that makes you enjoy adding and processing tasks.
 
@@ -13,7 +13,7 @@ A VSCode Extension that manage personal tasks in a simple GTD manner as standard
 Simple GTD creates three files:
 
 ```
-tasks/
+_tasks/
 ├── inbox.md
 ├── tasks.md
 └── log.md
@@ -44,7 +44,7 @@ Item in the inbox
             ├── Yes → Do it now!
             └── No → Who has to do it?
                 ├── Someone else → Delegate → Waiting for
-                └── You → Specific time?
+                └── You → Specific date?
                     ├── Yes → Calendar
                     └── No → Next actions by context
 ```
@@ -69,12 +69,11 @@ This file has three sections for classification.
 ## Do at
 
 <!-- 
-things being done at a specific datetime
-the datetime is specified as `@{datetime}` where {datetime} follows ISO 8601 format.
+Tasks scheduled for a specific calendar date.
+Write the date as `@YYYY-MM-DD`.
  -->
 
 - hoge @2026-08-07
-- hoge @2026-08-07T16:00:00.00
 ```
 
 Simple GTD delegates project creation to an arbitrary vscode commands.
@@ -114,7 +113,7 @@ inboxのアイテム全てを重なったカードのように表示し、一番
 
 - Enter Next Actions
 - → Waiting (キー押下後に担当者ダイアログ)
-- ← Do at / someday (キー押下後にdatetime入力ダイアログ。空欄でsomeday)
+- ← Do at / someday (キー押下後に日付入力ダイアログ。空欄でsomeday)
 - ↓ Done (すぐ終わるタスク)
 - ↑ Project (その場で設定コマンド実行)
 
