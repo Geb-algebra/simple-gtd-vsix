@@ -10,10 +10,10 @@
     },
     "geb-design-preferences": {
       "source": "Geb-algebra/geb-agent-skills",
-      "commit": "3cce74aca987839cb05212691d9516bb06d09b5f",
+      "commit": "e11283e0410145f4474eaa4ba37b088a78e30661",
       "sourceType": "github",
       "skillPath": "geb-design-preferences/SKILL.md",
-      "computedHash": "00345e80361997e3c0fc96f2fe527f706f264c05026f91f06787966dea8f3778"
+      "computedHash": "9bdede06a76c37852e4344d6ca2e18ddc2545de86f441f6fd942b2bcea0ba90a"
     },
     "module-mall-react-preferences": {
       "source": "Geb-algebra/geb-agent-skills",
