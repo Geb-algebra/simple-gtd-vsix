@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Ubuntu", "Noto Sans JP", sans-serif;
+  --color-ink: oklch(0.25 0.0541 236.36);
+  --color-muted: oklch(0.48 0.055 236.36);
+  --color-card-line: oklch(0.92 0.019 236.36);
+  --color-line: oklch(0.84 0.035 236.36);
+  --color-panel: oklch(0.977 0.009 236.36);
+  --color-wash: oklch(0.938 0.03 236.36);
+  --color-background: white;
+  --color-foreground: var(--color-ink);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: oklch(0.6 0.105 236.36);
+  --color-primary: oklch(0.42 0.1 236.36);
+  --color-primary-foreground: white;
+  --color-secondary: var(--color-wash);
+  --color-secondary-foreground: var(--color-ink);
+  --color-accent: var(--color-wash);
+  --color-accent-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-muted);
+  --color-popover: white;
+  --color-popover-foreground: var(--color-ink);
+  --radius-lg: 0.75rem;
+}
+
+@layer base {
+  body {
+    background: oklch(0.931 0.018 236.36);
+    color: var(--color-ink);
+  }
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+}
