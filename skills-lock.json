@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "skills": {
+    "composable-skill-design": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "composable-skill-design/SKILL.md",
+      "computedHash": "8bacf2bec63f4ada80b960afaf1db72ca7d051fa8ea95c66af4f9f027a13b951"
+    },
+    "geb-design-preferences": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "3cce74aca987839cb05212691d9516bb06d09b5f",
+      "sourceType": "github",
+      "skillPath": "geb-design-preferences/SKILL.md",
+      "computedHash": "00345e80361997e3c0fc96f2fe527f706f264c05026f91f06787966dea8f3778"
+    },
+    "module-mall-react-preferences": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "module-mall-react-preferences/SKILL.md",
+      "computedHash": "27a60fe51ca8ff3c7528525e41f51ab32730b43ff32d86ded464a824a501674b"
+    },
+    "ooui-design": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "ooui-design/SKILL.md",
+      "computedHash": "f1ca837052c2ffd062d8bf89b9f0f4ea67bb93ad3f0a8730869f547f7409be30"
+    },
+    "paragraph-writing-geb-preferences": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "writing-and-thoughts/paragraph-writing-geb-preferences/SKILL.md",
+      "computedHash": "4ac5a251dd44cd5513b85394ab9b618e313cf10ec302fb65746577a49df9f115"
+    },
+    "prototyping": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "prototyping/SKILL.md",
+      "computedHash": "bd87b850b7268e67b1f5a8187c686877e253822d9ece6f756bd588cd7a72d0c1"
+    },
+    "react-router-route-module-patterns": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "web-app/react-router-route-module-patterns/SKILL.md",
+      "computedHash": "ac06109b208191e85b7505ee70643e8f8e9b47385fed436bda296c72d4815d76"
+    },
+    "ui-components": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "web-app/ui-components/SKILL.md",
+      "computedHash": "c8fc8135c4a1a64f2e576262b783b8b9e634d0b4327595021fd970fb0002f792"
+    },
+    "web-app-tech-stack": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "web-app/web-app-tech-stack/SKILL.md",
+      "computedHash": "9fe904dbfbe4e0a3b9e63ba5dadc31cd8e62aaf31a41f6543e5d528fa40a9268"
+    },
+    "writing-structure": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
+      "sourceType": "github",
+      "skillPath": "writing-and-thoughts/writing-structure/SKILL.md",
+      "computedHash": "1ddd16766aeee27d0250b6bc3f15a2d49e492d57ab8ad320fa249b3e1e6a0775"
+    }
+  }
+}
