@@ -1,16 +1,56 @@
-# Simple GTD の VS Code 拡張 実装計画
+# Simple GTD の VS Code 拡張
 
-**Simple GTD には、Inbox・TODOs・TADAs をブラウザで試せる SPA がある。**
-VS Code で同じ UI を使うには、サイドバーへの組み込みと、ワークスペースの Markdown や VS Code コマンドへの接続が必要になる。
-この計画では、[IDEA.md](../../IDEA.md)、[ブラウザ版 UI の設計](261121_spa_ui.md)、[サイドバー向けパネル配置](261121_sidebar_panels.md)をもとに、既存の画面を拡張に載せる手順を定める。
-最初の反復の範囲と検証対象は[試作の設計記録](261121_vscode_prototype.md)に記す。
+- Status: Proposed
+- Date: 2026-11-21
 
-- VS Code サイドバーに SPA を表示し、既存の画面・カード・操作を再利用する。
-- タスクはワークスペースの Markdown に保存し、エディターでの直接編集を UI に反映する。
-- Inbox の Project は設定された VS Code コマンドへ委譲する。
-- Webview の起動、Markdown の往復、各画面の操作、VSIX の導入を順に検証する。
+## 目的
 
-## 1. サイドバーと SPA の接続
+**既存の SPA を VS Code のサイドバーに載せ、ワークスペースの Markdown と接続する。**
+最初の反復では、パネルの切替、3 ファイルの読み込み、Inbox への追記を通して接続を検証する。
+
+## 現在の決定
+
+### 仕様
+
+#### Markdown の保存形式
+
+**保存先は対象ワークスペースフォルダー直下の `_tasks/` とする。**
+`inbox.md` に未分類項目、`tasks.md` に Next Actions・Someday・Waiting for・Do at、`log.md` に日別の完了項目を置く。
+各項目は通常の箇条書きとし、Do at の指定日は行末の `@YYYY-MM-DD` で表す。
+ログの日付節は `## YYMMDD` で表す。
+
+### 設計
+
+#### サイドバー UI
+
+**VS Code のサイドバーでは既存の `spa/` を使う。**
+Inbox・TODOs・TADAs は実装済みの[縦並びパネル](261121_sidebar_panels.md)で切り替える。
+
+## 重要な代替案
+
+### Markdown のチェックリスト
+
+- 対応する決定: [Markdown の保存形式](#markdown-の保存形式)
+- Alternative: Markdown のチェックボックスで未完了と完了を記録する。
+- 棄却根拠: 保存形式は通常の箇条書きに統一することが決まった。完了済み項目はログへの所属で表す。
+
+## 未決事項
+
+### 最初の試作と残る検証
+
+**試作では、同じ画面コンポーネントを Webview 用の Vite エントリーから読み込む。**
+画面遷移には React Router のメモリルーターを使い、表示中のパスは Webview の状態に保持する。
+メッセージ経由で拡張ホストが Markdown を読み込み、Inbox への追加を書き込む。
+保存済みファイルの作成・変更・削除を監視して画面を再読み込みする。
+拡張のビルド、型チェック、lint、テスト 8 件は通過した。
+VS Code 上での表示と操作感を確認したうえで、この接続方式を採用するか決める。
+
+**この反復で保存に接続する操作は Inbox への追加である。**
+分類移動・編集・完了・後回し・Undo/Redo・Project の保存と実行、複数ファイルの同時更新、VSIX の導入確認は今後の反復で扱う。
+
+### 実装計画
+
+#### 1. サイドバーと SPA の接続
 
 **拡張ホストがサイドバーとファイル操作を担当し、Webview に載せた SPA が入力と表示を担当する。**
 拡張本体とマニフェストは `extension/` に置き、Activity Bar の Simple GTD ビューコンテナーに `WebviewViewProvider` を登録する。
@@ -37,7 +77,7 @@ CSP は読み込み元を絞り、インラインの起動スクリプトが必�
 ブラウザでは既存の `/`、`/tasks`、`/next`、`/log` を使う。
 [VS Code Webview API](https://code.visualstudio.com/api/extension-guides/webview)
 
-## 2. Markdown の保存と同期
+#### 2. Markdown の保存と同期
 
 **既存の `tasks/` との衝突を避けるため、選択したワークスペースフォルダー直下の `_tasks/` を保存先にする。**
 単一フォルダーではそのフォルダーを使い、複数フォルダーでは対象を選択できるようにする。
@@ -73,7 +113,7 @@ Ctrl/Cmd+Z と Ctrl/Cmd+Shift+Z を既存の Inbox 操作からホストに届�
 履歴はフォルダー単位でホストのセッション内に保持し、外部編集や分類済みカードの変更で無効化する。
 後回し順もホストのセッション内で扱い、日付変更時に解除する。
 
-## 3. GTD 操作と Project コマンド
+#### 3. GTD 操作と Project コマンド
 
 **既存 SPA の操作をホストで実行し、保存成功時にカードの移動を確定する。**
 Inbox の Enter は Next Actions、右は担当者入力後に Waiting for、左は日付入力後に Do at、左の空欄確定は Someday、下は完了に対応する。
@@ -97,7 +137,7 @@ Project の外部処理はコマンド側が所有し、この操作は Inbox �
 VS Code 版の分類は IDEA の四つを使い、ブラウザ試用版の Project 分類はブラウザの保存処理で扱う。
 [VS Code API](https://code.visualstudio.com/api/references/vscode-api)
 
-## 4. 実装順と完了条件
+#### 4. 実装順と完了条件
 
 **Webview の起動を先に確かめ、データの往復から画面操作へ段階的に接続する。**
 
