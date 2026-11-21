@@ -29,6 +29,13 @@
       "skillPath": "ooui-design/SKILL.md",
       "computedHash": "f1ca837052c2ffd062d8bf89b9f0f4ea67bb93ad3f0a8730869f547f7409be30"
     },
+    "ooui-implementation": {
+      "source": "Geb-algebra/geb-agent-skills",
+      "commit": "e11283e0410145f4474eaa4ba37b088a78e30661",
+      "sourceType": "github",
+      "skillPath": "ooui-implementation/SKILL.md",
+      "computedHash": "753aa4cadff733aa23fd30b7066b57b505874f036c9cb3e5e3ccff6ab87a2aa9"
+    },
     "paragraph-writing-geb-preferences": {
       "source": "Geb-algebra/geb-agent-skills",
       "commit": "e2163c44f5d4657d1d83634ed2cc804703362330",
