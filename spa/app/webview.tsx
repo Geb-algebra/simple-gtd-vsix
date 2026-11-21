@@ -7,7 +7,11 @@ import {
 } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { TooltipProvider } from "./components/ui/tooltip";
-import { operationSchema, stateSchema, type Operation } from "./tasks";
+import {
+  workspaceRequestSchema,
+  workspaceResponseSchema,
+  workspaceTransitionSchema,
+} from "./tasks";
 import { Workspace } from "./workspace";
 import "@fontsource/ubuntu/400.css";
 import "@fontsource/ubuntu/500.css";
@@ -24,7 +28,7 @@ declare function acquireVsCodeApi(): {
 
 const vscode = acquireVsCodeApi();
 
-function request(operation?: Operation): Promise<unknown> {
+function request(payload: ReturnType<typeof workspaceRequestSchema.parse> = {}): Promise<unknown> {
   const id = crypto.randomUUID();
   return new Promise((resolve, reject) => {
     function receive(event: MessageEvent) {
@@ -37,20 +41,20 @@ function request(operation?: Operation): Promise<unknown> {
     const timeout = window.setTimeout(() => {
       window.removeEventListener("message", receive);
       reject(new Error("Simple GTD did not respond."));
-    }, 15000);
+    }, 120000);
     window.addEventListener("message", receive);
-    vscode.postMessage({ id, operation });
+    vscode.postMessage({ id, ...payload });
   });
 }
 
 async function loader() {
-  return stateSchema.parse(await request());
+  return workspaceResponseSchema.parse(await request());
 }
 
 async function action({ request: form }: ActionFunctionArgs) {
   try {
-    const operation = operationSchema.parse(await form.json());
-    return { error: "", transition: await request(operation) };
+    const payload = workspaceRequestSchema.parse(await form.json());
+    return { error: "", transition: workspaceTransitionSchema.parse(await request(payload)) };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Could not save the change.",
@@ -60,7 +64,8 @@ async function action({ request: form }: ActionFunctionArgs) {
 }
 
 function Screen() {
-  return <Workspace state={useLoaderData<typeof loader>()} screen={useParams().screen} />;
+  const { state, revision } = useLoaderData<typeof loader>();
+  return <Workspace state={state} revision={revision} screen={useParams().screen} />;
 }
 
 const saved = vscode.getState()?.screen;

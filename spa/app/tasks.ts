@@ -56,6 +56,15 @@ export const operationSchema = z.discriminatedUnion("kind", [
 ]);
 export type Operation = z.infer<typeof operationSchema>;
 
+export const workspaceRequestSchema = z.object({
+  operation: operationSchema.optional(),
+  revision: z.string().optional(),
+  today: day.optional(),
+});
+
+export const workspaceResponseSchema = z.object({ state: stateSchema, revision: z.string() });
+export const workspaceTransitionSchema = transition.nullable();
+
 export function localDay(date = new Date()) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
     .map((part) => String(part).padStart(2, "0"))

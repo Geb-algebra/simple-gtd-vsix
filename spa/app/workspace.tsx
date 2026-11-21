@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { Route } from "./+types/workspace";
 import { loadWorkspace, changeWorkspace } from "./storage.client";
 import {
-  categories,
+  categories as allCategories,
   localDay,
   nextTasks,
   operationSchema,
@@ -157,10 +157,21 @@ export default function WorkspaceRoute({ loaderData, params }: Route.ComponentPr
   return <Workspace state={loaderData} screen={params.screen} />;
 }
 
-export function Workspace({ state, screen }: { state: State; screen?: string }) {
+const extensionCategories = allCategories.filter((category) => category !== "Project");
+
+export function Workspace({
+  state,
+  screen,
+  revision,
+}: {
+  state: State;
+  screen?: string;
+  revision?: string;
+}) {
+  const categories: readonly Category[] =
+    revision === undefined ? allCategories : extensionCategories;
   const location = useLocation();
-  const panel: Panel =
-    screen === "log" ? "TADAs" : screen === undefined ? "Inbox" : "TODOs";
+  const panel: Panel = screen === "log" ? "TADAs" : screen === undefined ? "Inbox" : "TODOs";
   const all = screen === "tasks";
   const [today, setToday] = useState(localDay);
   const [edit, setEdit] = useState<Edit>();
@@ -297,7 +308,7 @@ export function Workspace({ state, screen }: { state: State; screen?: string }) 
         : undefined;
     change.current = { source, empty };
     const send = () =>
-      fetcher.submit(operation, {
+      fetcher.submit(revision === undefined ? operation : { operation, revision, today }, {
         method: "post",
         encType: "application/json",
         action: location.pathname,
@@ -350,8 +361,10 @@ export function Workspace({ state, screen }: { state: State; screen?: string }) 
                 : "Project",
         );
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // VS Code cancels native Undo and Redo in a Webview bubble listener.
+    const capture = revision !== undefined;
+    window.addEventListener("keydown", onKey, capture);
+    return () => window.removeEventListener("keydown", onKey, capture);
   });
 
   function move(task: Task, group: Category, before?: string) {

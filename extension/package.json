@@ -3,10 +3,12 @@
   "displayName": "Simple GTD",
   "version": "0.0.1",
   "description": "Manage tasks in plain Markdown lists.",
+  "license": "UNLICENSED",
   "publisher": "simple-gtd",
   "main": "./dist/extension.cjs",
   "scripts": {
-    "build": "cd ../spa && bun x vite build --config vite.webview.config.ts && cd ../extension && bun build extension.ts --target=node --format=cjs --external vscode --outfile dist/extension.cjs"
+    "build": "cd ../spa && bun x vite build --config vite.webview.config.ts && cd ../extension && bun build extension.ts --target=node --format=cjs --external vscode --outfile dist/extension.cjs",
+    "package": "bun run build && bun x @vscode/vsce@4.1.1 package --no-dependencies --allow-missing-repository"
   },
   "contributes": {
     "viewsContainers": {
@@ -26,6 +28,23 @@
           "type": "webview"
         }
       ]
+    },
+    "commands": [
+      {
+        "command": "simpleGtd.selectFolder",
+        "title": "Simple GTD: Select Workspace Folder"
+      }
+    ],
+    "configuration": {
+      "title": "Simple GTD",
+      "properties": {
+        "simpleGtd.projectCommand": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "VS Code command ID called with { name, folderUri } to create a project from an Inbox task."
+        }
+      }
     }
   },
   "activationEvents": [

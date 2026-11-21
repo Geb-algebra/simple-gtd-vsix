@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendInbox, initialMarkdown, readTasks } from "../../extension/markdown";
+import { editMarkdown, initialMarkdown, readTasks } from "../../extension/markdown";
 
 describe("workspace Markdown", () => {
   it("reads the three files as plain lists in file order", () => {
@@ -23,7 +23,12 @@ describe("workspace Markdown", () => {
 
   it("appends a single task without rewriting the previous content", () => {
     const source = "<!-- note -->\r\n- Previous";
-    const inbox = appendInbox(source, "New");
+    const markdown = { ...initialMarkdown, "inbox.md": source };
+    const { tasks } = readTasks(markdown);
+    const inbox = editMarkdown(markdown, tasks, [
+      ...tasks,
+      { id: "new", name: "New", group: "Inbox" },
+    ])["inbox.md"];
     expect(inbox).toBe(source + "\r\n- New\r\n");
     expect(
       readTasks({ ...initialMarkdown, "inbox.md": inbox }).tasks.map((task) => task.name),

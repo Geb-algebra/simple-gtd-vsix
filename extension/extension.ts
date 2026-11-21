@@ -1,31 +1,52 @@
 import { randomBytes } from "node:crypto";
 import * as vscode from "vscode";
-import { operationSchema } from "../spa/app/tasks";
-import { appendInbox, files, initialMarkdown, readTasks, type Markdown } from "./markdown";
+import { localDay, workspaceRequestSchema } from "../spa/app/tasks";
+import { files, initialMarkdown, type Markdown, type MarkdownFile } from "./markdown";
+import { sameMarkdown, WorkspaceSession } from "./session";
+import { saveMarkdown, verifyUnchanged, type MarkdownStorage } from "./storage";
 
 const viewId = "simpleGtd.workspace";
-const decoder = new TextDecoder();
+const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
 const encoder = new TextEncoder();
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  const assets = vscode.Uri.joinPath(context.extensionUri, "dist", "webview");
+  const html = decoder.decode(
+    await vscode.workspace.fs.readFile(vscode.Uri.joinPath(assets, "webview.html")),
+  );
   let folder: vscode.WorkspaceFolder | undefined;
   let queue: Promise<unknown> = Promise.resolve();
+  const sessions = new Map<string, WorkspaceSession>();
+  let refreshView: (() => void) | undefined;
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("simpleGtd.selectFolder", async () => {
+      const selected = await vscode.window.showWorkspaceFolderPick();
+      if (!selected) return;
+      folder = selected;
+      refreshView?.();
+      await vscode.commands.executeCommand(`${viewId}.focus`);
+    }),
+  );
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(viewId, {
-      async resolveWebviewView(view) {
-        const assets = vscode.Uri.joinPath(context.extensionUri, "dist", "webview");
+      resolveWebviewView(view) {
         view.webview.options = { enableScripts: true, localResourceRoots: [assets] };
 
         const refresh = () => {
           void view.webview.postMessage({ type: "refresh" });
         };
+        refreshView = refresh;
         const watcher = vscode.workspace.createFileSystemWatcher("**/_tasks/{inbox,tasks,log}.md");
         const subscriptions = [
           watcher,
           watcher.onDidChange(refresh),
           watcher.onDidCreate(refresh),
           watcher.onDidDelete(refresh),
+          vscode.workspace.onDidSaveTextDocument(({ uri }) => {
+            if (files.some((file) => uri.path.endsWith(`/_tasks/${file}`))) refresh();
+          }),
           vscode.workspace.onDidChangeWorkspaceFolders(() => {
             if (folder && !vscode.workspace.getWorkspaceFolder(folder.uri)) folder = undefined;
             refresh();
@@ -44,11 +65,11 @@ export function activate(context: vscode.ExtensionContext) {
             );
           }),
         ];
-        view.onDidDispose(() => subscriptions.forEach((subscription) => subscription.dispose()));
+        view.onDidDispose(() => {
+          if (refreshView === refresh) refreshView = undefined;
+          subscriptions.forEach((subscription) => subscription.dispose());
+        });
 
-        const html = decoder.decode(
-          await vscode.workspace.fs.readFile(vscode.Uri.joinPath(assets, "webview.html")),
-        );
         const nonce = randomBytes(16).toString("base64");
         const csp = `default-src 'none'; script-src 'nonce-${nonce}'; style-src ${view.webview.cspSource} 'unsafe-inline'; font-src ${view.webview.cspSource}; img-src ${view.webview.cspSource} data:;`;
         view.webview.html = html
@@ -73,12 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     const { id } = message;
     try {
-      const operation =
-        "operation" in message && message.operation !== undefined
-          ? operationSchema.parse(message.operation)
-          : undefined;
-      if (operation && operation.kind !== "add")
-        throw new Error("This action is not connected to Markdown yet.");
+      const { operation, revision, today } = workspaceRequestSchema.parse(message);
       const folders = vscode.workspace.workspaceFolders ?? [];
       folder ??=
         folders.length === 1
@@ -87,46 +103,77 @@ export function activate(context: vscode.ExtensionContext) {
             ? await vscode.window.showWorkspaceFolderPick()
             : undefined;
       if (!folder) throw new Error("Open or select a workspace folder to use Simple GTD.");
-      const directory = vscode.Uri.joinPath(folder.uri, "_tasks");
-      await vscode.workspace.fs.createDirectory(directory);
-      const markdown = { ...initialMarkdown };
-      for (const file of files) {
-        const uri = vscode.Uri.joinPath(directory, file);
-        try {
-          markdown[file] = decoder.decode(await vscode.workspace.fs.readFile(uri));
-        } catch (error) {
-          if (!(error instanceof vscode.FileSystemError) || error.code !== "FileNotFound")
-            throw error;
-          await vscode.workspace.fs.writeFile(uri, encoder.encode(initialMarkdown[file]));
-        }
-      }
-      if (!operation) return { id, result: readTasks(markdown) };
+      const selected = folder;
+      const key = selected.uri.toString();
+      const directory = vscode.Uri.joinPath(selected.uri, "_tasks");
+      const markdown = await loadMarkdown(directory, !operation);
 
-      const inbox = vscode.Uri.joinPath(directory, "inbox.md");
-      const document = vscode.workspace.textDocuments.find(
-        (doc) => doc.uri.toString() === inbox.toString(),
-      );
-      if (
-        document?.isDirty ||
-        decoder.decode(await vscode.workspace.fs.readFile(inbox)) !== markdown["inbox.md"]
-      ) {
-        throw new Error("Inbox changed. Save your edits and try again.");
+      let session = sessions.get(key);
+      if (!session || !sameMarkdown(session.markdown, markdown)) {
+        session = new WorkspaceSession(markdown);
+        sessions.set(key, session);
       }
-      await vscode.workspace.fs.writeFile(
-        inbox,
-        encoder.encode(appendInbox(markdown["inbox.md"], operation.name)),
-      );
-      return {
-        id,
-        result: {
-          id: `inbox.md:${markdown["inbox.md"].split(/\r?\n/).length - (markdown["inbox.md"].endsWith("\n") || !markdown["inbox.md"] ? 1 : 0)}`,
-          name: operation.name,
-          from: "Add",
-          to: "Inbox",
+      if (!operation) return { id, result: { state: session.state, revision: session.revision } };
+      if (revision !== session.revision)
+        throw new Error("Tasks changed. Check the refreshed view and try again.");
+      const storage = workspaceStorage(directory);
+      await verifyUnchanged(storage, markdown);
+
+      const transition = await session.change(
+        operation,
+        today ?? localDay(),
+        (next) => saveMarkdown(storage, markdown, next),
+        async (name) => {
+          const command = vscode.workspace
+            .getConfiguration("simpleGtd")
+            .inspect<string>("projectCommand")
+            ?.globalValue?.trim();
+          if (!command) throw new Error("Set Simple GTD: Project Command in User Settings.");
+          const result = await vscode.commands.executeCommand(command, { name, folderUri: key });
+          if (result === false) throw new Error("The project command did not create a project.");
         },
-      };
+      );
+      return { id, result: transition };
     } catch (error) {
       return { id, error: error instanceof Error ? error.message : String(error) };
     }
   }
+}
+
+async function loadMarkdown(directory: vscode.Uri, initialize: boolean) {
+  if (initialize) await vscode.workspace.fs.createDirectory(directory);
+  const markdown = { ...initialMarkdown };
+  for (const file of files) {
+    const uri = vscode.Uri.joinPath(directory, file);
+    try {
+      markdown[file] = decoder.decode(await vscode.workspace.fs.readFile(uri));
+    } catch (error) {
+      if (
+        !initialize ||
+        !(error instanceof vscode.FileSystemError) ||
+        error.code !== "FileNotFound"
+      )
+        throw error;
+      await vscode.workspace.fs.writeFile(uri, encoder.encode(initialMarkdown[file]));
+    }
+  }
+  return markdown;
+}
+
+function workspaceStorage(directory: vscode.Uri): MarkdownStorage {
+  const fileUri = (file: MarkdownFile) => vscode.Uri.joinPath(directory, file);
+  return {
+    async read(file) {
+      return decoder.decode(await vscode.workspace.fs.readFile(fileUri(file)));
+    },
+    async write(file, value) {
+      await vscode.workspace.fs.writeFile(fileUri(file), encoder.encode(value));
+    },
+    isDirty(file) {
+      const uri = fileUri(file).toString();
+      return vscode.workspace.textDocuments.some(
+        (doc) => doc.isDirty && doc.uri.toString() === uri,
+      );
+    },
+  };
 }
