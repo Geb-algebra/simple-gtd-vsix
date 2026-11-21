@@ -4,10 +4,19 @@ import * as React from "react";
 import { cn } from "./utils";
 import { DayPicker, getDefaultClassNames, type DayButton, type Locale } from "react-day-picker";
 
+import { ButtonTooltip } from "./tooltip";
 import { Button, buttonVariants } from "./button";
 
 const calendarButtonHover = "enabled:hover:bg-wash enabled:hover:text-ink";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react";
+
+function MonthNavigationButton(props: React.ComponentProps<"button">) {
+  return (
+    <ButtonTooltip label={props["aria-label"] ?? "Change month"}>
+      <button {...props} />
+    </ButtonTooltip>
+  );
+}
 
 function Calendar({
   className,
@@ -120,6 +129,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        PreviousMonthButton: MonthNavigationButton,
+        NextMonthButton: MonthNavigationButton,
         Root: ({ className, rootRef, ...props }) => {
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
         },

@@ -3,7 +3,15 @@ import { FlightCard } from "./task-card";
 import type { Transition } from "./tasks";
 import styles from "./workspace.module.css";
 
-export type Motion = { transition: Transition; start: DOMRect; end: DOMRect; token: number };
+export const flightDuration = 340;
+
+export type Motion = {
+  transition: Transition;
+  start: DOMRect;
+  end: DOMRect;
+  impact: HTMLElement | null;
+  token: number;
+};
 
 export function reducedMotion() {
   return matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -12,11 +20,13 @@ export function reducedMotion() {
 export function Flight({ motion }: { motion: Motion }) {
   const card = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
-  const { start, end, transition } = motion;
+  const { start, end, impact, transition } = motion;
   useEffect(() => {
     const x = end.left + end.width / 2 - start.left - start.width / 2;
     const y = end.top + end.height / 2 - start.top - start.height / 2;
     const defer = transition.to === "Defer";
+    const scale = Math.min(0.9, (end.width - 8) / start.width, (end.height - 8) / start.height);
+    const arrival = `translate(${x}px, ${y}px) scale(${Math.max(0.2, scale)})`;
     const animation = card.current?.animate(
       defer
         ? [
@@ -24,15 +34,39 @@ export function Flight({ motion }: { motion: Motion }) {
             { transform: "translateY(-65px) rotate(-3deg)", offset: 0.45 },
             { transform: "translateY(10px) scale(.94)", opacity: 0 },
           ]
-        : [
-            { transform: "translate(0, 0)" },
-            { transform: `translate(${x}px, ${y}px) scale(.9)`, opacity: 0.25 },
-          ],
-      { duration: 340, easing: "cubic-bezier(.28,.75,.35,1)", fill: "both" },
+        : impact
+          ? [
+              { transform: "translate(0, 0)" },
+              { transform: arrival, opacity: 1, offset: 0.82 },
+              { transform: arrival, opacity: 0 },
+            ]
+          : [
+              { transform: "translate(0, 0)" },
+              { transform: `translate(${x}px, ${y}px) scale(.9)`, opacity: 0.25 },
+            ],
+      { duration: flightDuration, easing: "cubic-bezier(.28,.75,.35,1)", fill: "both" },
     );
-    if (animation) animation.onfinish = () => setVisible(false);
-    return () => animation?.cancel();
-  }, [end, start, transition]);
+    let reaction: Animation | undefined;
+    if (animation)
+      animation.onfinish = () => {
+        setVisible(false);
+        if (!impact?.isConnected || reducedMotion()) return;
+        const nudge = y < 0 ? -4 : 4;
+        reaction = impact.animate(
+          [
+            { transform: "translateY(0)" },
+            { transform: `translateY(${nudge}px)`, offset: 0.28 },
+            { transform: `translateY(${-nudge / 2}px)`, offset: 0.62 },
+            { transform: "translateY(0)" },
+          ],
+          { duration: 260, easing: "ease-out" },
+        );
+      };
+    return () => {
+      animation?.cancel();
+      reaction?.cancel();
+    };
+  }, [end, impact, start, transition]);
 
   return (
     visible && (

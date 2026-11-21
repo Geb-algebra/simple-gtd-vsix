@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { CalendarDays, Check, GripVertical, UserRound } from "lucide-react";
+import { ButtonTooltip } from "./components/ui/tooltip";
 import { Input } from "./components/ui/input";
 import { Checkbox } from "./components/ui/checkbox";
 import { Calendar } from "./components/ui/calendar";
@@ -35,16 +36,17 @@ export function IconButton({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      className={`${styles.iconButton} ${iconClass}`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
+    <ButtonTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        className={`${styles.iconButton} ${iconClass}`}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    </ButtonTooltip>
   );
 }
 
@@ -224,17 +226,18 @@ export function TaskCard({
     >
       <span className={styles.handle}>
         {onDrag && (
-          <button
-            type="button"
-            aria-label={`Move ${task.name}`}
-            title="Drag or press Alt and an arrow key"
-            className={`${styles.grip} text-muted hover:text-ink focus-visible:outline-2`}
-            draggable
-            onDragStart={(event) => onDrag(event, task)}
-            onKeyDown={(event) => onHandleKey?.(event, task)}
-          >
-            <GripVertical size={17} />
-          </button>
+          <ButtonTooltip label="Move task · drag or press Alt and an arrow key">
+            <button
+              type="button"
+              aria-label={`Move ${task.name}`}
+              className={`${styles.grip} text-muted hover:text-ink focus-visible:outline-2`}
+              draggable
+              onDragStart={(event) => onDrag(event, task)}
+              onKeyDown={(event) => onHandleKey?.(event, task)}
+            >
+              <GripVertical size={17} />
+            </button>
+          </ButtonTooltip>
         )}
       </span>
       <Checkbox

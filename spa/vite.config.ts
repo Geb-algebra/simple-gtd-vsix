@@ -10,6 +10,7 @@ export default defineConfig({
       "@base-ui/react/checkbox",
       "@base-ui/react/input",
       "@base-ui/react/popover",
+      "@base-ui/react/tooltip",
       "class-variance-authority",
       "clsx",
       "localforage",

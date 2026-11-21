@@ -6,6 +6,7 @@ import "@fontsource/ubuntu/700.css";
 import "@fontsource/noto-sans-jp/400.css";
 import "@fontsource/noto-sans-jp/700.css";
 import "./theme.css";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
@@ -33,5 +34,9 @@ export function ErrorBoundary() {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <TooltipProvider delay={350}>
+      <Outlet />
+    </TooltipProvider>
+  );
 }
