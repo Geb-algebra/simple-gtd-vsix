@@ -11,6 +11,7 @@ import {
   operationSchema,
   type Category,
   type Task,
+  type State,
 } from "./tasks";
 import { ButtonTooltip } from "./components/ui/tooltip";
 import { Checkbox } from "./components/ui/checkbox";
@@ -152,11 +153,15 @@ function AddTask({
   );
 }
 
-export default function Workspace({ loaderData: state, params }: Route.ComponentProps) {
+export default function WorkspaceRoute({ loaderData, params }: Route.ComponentProps) {
+  return <Workspace state={loaderData} screen={params.screen} />;
+}
+
+export function Workspace({ state, screen }: { state: State; screen?: string }) {
   const location = useLocation();
   const panel: Panel =
-    params.screen === "log" ? "TADAs" : params.screen === undefined ? "Inbox" : "TODOs";
-  const all = params.screen === "tasks";
+    screen === "log" ? "TADAs" : screen === undefined ? "Inbox" : "TODOs";
+  const all = screen === "tasks";
   const [today, setToday] = useState(localDay);
   const [edit, setEdit] = useState<Edit>();
   const [adding, setAdding] = useState(false);

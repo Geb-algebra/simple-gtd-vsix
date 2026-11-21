@@ -1,0 +1,37 @@
+{
+  "name": "simple-gtd",
+  "displayName": "Simple GTD",
+  "version": "0.0.1",
+  "description": "Manage tasks in plain Markdown lists.",
+  "publisher": "simple-gtd",
+  "main": "./dist/extension.cjs",
+  "scripts": {
+    "build": "cd ../spa && bun x vite build --config vite.webview.config.ts && cd ../extension && bun build extension.ts --target=node --format=cjs --external vscode --outfile dist/extension.cjs"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "simpleGtd",
+          "title": "Simple GTD",
+          "icon": "icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "simpleGtd": [
+        {
+          "id": "simpleGtd.workspace",
+          "name": "Simple GTD",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "activationEvents": [
+    "onView:simpleGtd.workspace"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  }
+}
