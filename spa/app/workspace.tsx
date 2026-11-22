@@ -17,7 +17,15 @@ import { ButtonTooltip } from "./components/ui/tooltip";
 import { Checkbox } from "./components/ui/checkbox";
 import { Input } from "./components/ui/input";
 import { cn } from "./components/ui/utils";
-import { cardClass, iconClass, IconButton, TaskCard, type Edit, type Submit } from "./task-card";
+import {
+  cardClass,
+  FlightCard,
+  iconClass,
+  IconButton,
+  TaskCard,
+  type Edit,
+  type Submit,
+} from "./task-card";
 import { Confetti, Flight, flightDuration, reducedMotion, type Motion } from "./motion";
 import { Log } from "./log";
 import styles from "./workspace.module.css";
@@ -58,17 +66,34 @@ const panelSurface = "rounded-xl border border-line bg-panel";
 
 const panelOrder = ["Inbox", "TODOs", "TADAs"] as const;
 
-function CollapsedPanel({ panel }: { panel: Panel }) {
+function StackPreview({ tasks, empty }: { tasks: Task[]; empty: string }) {
+  const head = tasks[0];
+  return (
+    <div className={styles.panelPreview} aria-hidden="true">
+      <div className={styles.stack} data-depth={Math.min(3, tasks.length)}>
+        {head ? (
+          <FlightCard name={head.name} checked={false} />
+        ) : (
+          <p className={`${styles.empty} text-muted`}>{empty}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CollapsedPanel({ panel, children }: { panel: Panel; children: React.ReactNode }) {
   const { url, Icon } = panels[panel];
   return (
-    <Link
-      to={url}
+    <section
       data-panel={panel}
-      className={`${styles.collapsedPanel} ${panelSurface} text-xl font-bold hover:bg-wash focus-visible:outline-2`}
+      className={`${styles.collapsedPanel} ${panelSurface}`}
     >
-      <Icon size={21} aria-hidden="true" />
-      <span>{panel}</span>
-    </Link>
+      <Link to={url} className={`${styles.collapsedHeading} text-xl font-bold`}>
+        <Icon size={21} aria-hidden="true" />
+        <span>{panel}</span>
+      </Link>
+      {children}
+    </section>
   );
 }
 
@@ -476,11 +501,24 @@ export function Workspace({
   );
 
   const heading = panels[panel];
+  const addTask = (
+    <AddTask open={adding} setOpen={setAdding} disabled={disabled} submit={submit} />
+  );
   return (
     <div className={styles.workspace} data-active={panel}>
       {panelOrder.map((item) =>
         item !== panel ? (
-          <CollapsedPanel key={item} panel={item} />
+          <CollapsedPanel key={item} panel={item}>
+            {item === "Inbox" && addTask}
+            {item === "TADAs" ? (
+              <Log tasks={state.tasks} today={today} />
+            ) : (
+              <StackPreview
+                tasks={item === "Inbox" ? inbox : next}
+                empty={item === "Inbox" ? "Inbox is empty" : "No next actions"}
+              />
+            )}
+          </CollapsedPanel>
         ) : (
           <main key={item} className={`${styles.panel} ${panelSurface}`} data-panel={item}>
             <div className={styles.panelHeading}>
@@ -507,12 +545,15 @@ export function Workspace({
             {panel === "TADAs" ? (
               <Log tasks={state.tasks} today={today} renderCard={renderCard} />
             ) : all ? (
-              list
+              <>
+                <Link to="/next" className={styles.nextPreview} aria-label="Next Actions">
+                  <StackPreview tasks={next} empty="No next actions" />
+                </Link>
+                {list}
+              </>
             ) : (
               <>
-                {panel === "Inbox" && (
-                  <AddTask open={adding} setOpen={setAdding} disabled={disabled} submit={submit} />
-                )}
+                {panel === "Inbox" && addTask}
                 <div className={styles.stackLayout}>
                   {panel === "TODOs" && head && (
                     <IconButton

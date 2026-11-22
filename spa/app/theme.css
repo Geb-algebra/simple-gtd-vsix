@@ -25,6 +25,10 @@
   --radius-lg: 0.75rem;
 }
 
+body {
+  font-family: var(--font-sans);
+}
+
 @layer base {
   body {
     background: oklch(0.931 0.018 236.36);

@@ -1,27 +1,31 @@
 .workspace {
   --gap: 0.45rem;
   --panel-padding: clamp(0.75rem, 3vw, 2.25rem);
-  --card-width: min(32rem, 100%);
-  --card-height: 3.5rem;
+  --card-width: 32rem;
+  --panel-width: calc(var(--card-width) + 2 * (var(--panel-padding) + 1px));
+  --card-row-height: 2rem;
+  --card-padding: 4px;
+  --card-height: calc(var(--card-row-height) + 2 * (var(--card-padding) + 1px));
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(100%, var(--panel-width)));
+  justify-content: center;
   grid-template-rows: auto auto auto;
   gap: var(--gap);
   height: 100dvh;
   padding: var(--gap);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .workspace[data-active="Inbox"] {
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-rows: minmax(10rem, 1fr) auto auto;
 }
 
 .workspace[data-active="TODOs"] {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(10rem, 1fr) auto;
 }
 
 .workspace[data-active="TADAs"] {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(10rem, 1fr);
 }
 
 .panel {
@@ -32,12 +36,64 @@
 }
 
 .collapsedPanel {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  padding: 0.55rem var(--panel-padding);
+}
+
+.collapsedHeading {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: center;
   gap: 0.65rem;
-  padding: 0.55rem var(--panel-padding);
+}
+
+.collapsedHeading::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  content: "";
+}
+
+.collapsedHeading:focus-visible::after {
+  outline: 2px solid currentColor;
   outline-offset: -2px;
+}
+
+.collapsedPanel:has(.collapsedHeading:hover) {
+  background: var(--color-wash);
+}
+
+.collapsedPanel .addArea {
+  margin-block: 0;
+}
+
+.collapsedPanel .addButton,
+.collapsedPanel .addForm {
+  position: relative;
+  z-index: 2;
+}
+
+.panelPreview {
+  width: min(100%, var(--card-width));
+  margin-inline: auto;
+}
+
+.panelPreview .stack {
+  margin-bottom: 0.75rem;
+}
+
+.panelPreview .heatCard {
+  padding: 0.5rem;
+}
+
+.nextPreview {
+  display: block;
+  margin-top: 0.75rem;
 }
 
 .panelHeading {
@@ -94,6 +150,9 @@
 }
 .addForm .check:disabled {
   opacity: 1;
+}
+.addForm .titleInput {
+  height: var(--card-row-height);
 }
 .addHint {
   text-align: right;
@@ -174,8 +233,8 @@
   align-items: center;
   gap: clamp(0.25rem, 1.1vw, 0.55rem);
   width: 100%;
-  min-height: var(--card-height, 3.5rem);
-  padding-right: clamp(0.3rem, 2vw, 0.85rem);
+  min-height: var(--card-height);
+  padding: var(--card-padding);
 }
 .handle,
 .grip,
@@ -185,7 +244,7 @@
 }
 .grip {
   width: 100%;
-  min-height: 2.5rem;
+  min-height: var(--card-row-height);
   cursor: grab;
 }
 .check,
@@ -197,12 +256,33 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.card .titleInput {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-  padding-inline: 0.2rem;
-  font-size: inherit;
+.titleEditor {
+  position: relative;
+  min-width: 0;
+}
+.titleText,
+.titleInput {
+  min-height: var(--card-row-height);
+  padding: 3px 0.2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.titleText {
+  display: block;
+}
+.titleMeasure {
+  visibility: hidden;
+}
+.titleEditor > .titleInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  overflow: hidden;
 }
 .card .titleInput:hover {
   background: var(--color-panel);
@@ -211,9 +291,12 @@
 .card .titleInput:focus {
   background: var(--color-wash);
   border-color: var(--color-ring);
+  outline: 1px solid color-mix(in oklab, var(--color-ring) 50%, transparent);
+  box-shadow: none;
 }
 .attributes {
   min-width: 0;
+  padding-inline-end: 8px;
 }
 .attributeEditor .field {
   font-size: 0.83rem;

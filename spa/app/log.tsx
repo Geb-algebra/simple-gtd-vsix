@@ -11,7 +11,7 @@ export function Log({
 }: {
   tasks: Task[];
   today: string;
-  renderCard: (task: Task) => React.ReactNode;
+  renderCard?: (task: Task) => React.ReactNode;
 }) {
   const [selection, setDate] = useState<string>();
   const details = useRef<HTMLElement>(null);
@@ -38,7 +38,7 @@ export function Log({
   const weeks = Math.ceil((offset + days.length) / 7);
 
   return (
-    <div className={styles.list}>
+    <div className={renderCard ? styles.list : styles.panelPreview}>
       <section
         className={`${styles.heatCard} rounded-lg border border-line bg-white shadow-md`}
         aria-label="Completion heatmap"
@@ -58,6 +58,7 @@ export function Log({
           ))}
           {days.map(({ current, cell, count, key }) => {
             const col = Math.floor(cell / 7) + 2;
+            const cellStyle = { gridColumn: col, gridRow: (cell % 7) + 2 };
             return (
               <span className={styles.heatContents} key={key}>
                 {current.getDate() === 1 && (
@@ -65,32 +66,42 @@ export function Log({
                     {month.format(current)}
                   </span>
                 )}
-                <button
-                  type="button"
-                  className={`${styles.heatDay} rounded-xs focus-visible:outline-2`}
-                  data-level={Math.min(count, 4)}
-                  aria-pressed={key === date}
-                  title={`${key} · ${count} completed`}
-                  aria-label={`${key}, ${count} completed`}
-                  onClick={() => {
-                    setDate(key);
-                    requestAnimationFrame(() =>
-                      details.current?.scrollIntoView({ block: "nearest" }),
-                    );
-                  }}
-                  style={{ gridColumn: col, gridRow: (cell % 7) + 2 }}
-                />
+                {renderCard ? (
+                  <button
+                    type="button"
+                    className={`${styles.heatDay} rounded-xs focus-visible:outline-2`}
+                    data-level={Math.min(count, 4)}
+                    aria-pressed={key === date}
+                    title={`${key} · ${count} completed`}
+                    aria-label={`${key}, ${count} completed`}
+                    onClick={() => {
+                      setDate(key);
+                      requestAnimationFrame(() =>
+                        details.current?.scrollIntoView({ block: "nearest" }),
+                      );
+                    }}
+                    style={cellStyle}
+                  />
+                ) : (
+                  <span
+                    className={`${styles.heatDay} rounded-xs`}
+                    data-level={Math.min(count, 4)}
+                    style={cellStyle}
+                  />
+                )}
               </span>
             );
           })}
         </div>
       </section>
-      <section ref={details} className={styles.category} aria-label={date}>
-        <h2 className="font-bold">
-          {date} <span className="text-muted">· {selected.length} completed</span>
-        </h2>
-        {selected.map(renderCard)}
-      </section>
+      {renderCard && (
+        <section ref={details} className={styles.category} aria-label={date}>
+          <h2 className="font-bold">
+            {date} <span className="text-muted">· {selected.length} completed</span>
+          </h2>
+          {selected.map(renderCard)}
+        </section>
+      )}
     </div>
   );
 }

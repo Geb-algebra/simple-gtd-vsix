@@ -197,6 +197,7 @@ export function TaskCard({
   disabled: boolean;
 }) {
   const card = useRef<HTMLElement>(null);
+  const [draftName, setDraftName] = useState<string>();
   const done = task.group === "Done";
   const showActions =
     task.group === "Inbox" || task.group === "Next Actions" || task.group === "Someday";
@@ -252,27 +253,35 @@ export function TaskCard({
       {done ? (
         <span className={styles.taskName}>{task.name}</span>
       ) : (
-        <Input
-          key={task.name}
-          aria-label="Task name"
-          title={task.name}
-          defaultValue={task.name}
-          disabled={disabled}
-          className={`${styles.taskName} ${styles.titleInput}`}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing) return;
-            if (event.key === "Enter") event.currentTarget.blur();
-            if (event.key === "Escape") {
+        <div className={styles.titleEditor}>
+          <span aria-hidden="true" className={`${styles.titleText} ${styles.titleMeasure}`}>
+            {draftName ?? task.name}{" "}
+          </span>
+          <textarea
+            key={task.name}
+            aria-label="Task name"
+            title={task.name}
+            defaultValue={task.name}
+            disabled={disabled}
+            className={`${styles.taskName} ${styles.titleInput}`}
+            rows={1}
+            onChange={(event) => setDraftName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing) return;
+              if (event.key === "Enter") event.currentTarget.blur();
+              if (event.key === "Escape") {
+                event.currentTarget.value = task.name;
+                event.currentTarget.blur();
+              }
+            }}
+            onBlur={(event) => {
+              const name = event.currentTarget.value.replace(/\r?\n/g, " ").trim();
               event.currentTarget.value = task.name;
-              event.currentTarget.blur();
-            }
-          }}
-          onBlur={(event) => {
-            const name = event.currentTarget.value.trim();
-            event.currentTarget.value = task.name;
-            if (name && name !== task.name) save({ kind: "rename", id: task.id, name });
-          }}
-        />
+              setDraftName(undefined);
+              if (name && name !== task.name) save({ kind: "rename", id: task.id, name });
+            }}
+          />
+        </div>
       )}
       <div className={styles.attributes}>
         {edit && onClose ? (
@@ -342,7 +351,7 @@ export function FlightCard({ name, checked }: { name: string; checked: boolean }
       <span className={`${styles.flightCheck} rounded border border-line`}>
         {checked && <Check size={15} />}
       </span>
-      <span className={styles.taskName}>{name}</span>
+      <span className={styles.titleText}>{name}</span>
       <span />
     </div>
   );
