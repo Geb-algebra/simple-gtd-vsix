@@ -6,7 +6,7 @@ export type Markdown = Record<MarkdownFile, string>;
 
 export const initialMarkdown: Markdown = {
   "inbox.md": "",
-  "tasks.md": "## Next Actions\n\n## Someday\n\n## Waiting for\n\n## Do at\n",
+  "tasks.md": "## Next Actions\n\n## Someday\n\n## Waiting for\n\n## Do at\n\n## Project\n",
   "log.md": "# log\n",
 };
 
@@ -48,7 +48,7 @@ export function readTasks(markdown: Markdown, today = localDay()): State {
         const completed = `20${heading.slice(0, 2)}-${heading.slice(2, 4)}-${heading.slice(4)}`;
         task = { id, name, group: "Done", completed };
       } else if (file === "tasks.md") {
-        if (heading === "Next Actions" || heading === "Someday")
+        if (heading === "Next Actions" || heading === "Someday" || heading === "Project")
           task = { id, name, group: heading };
         if (heading === "Waiting for" || heading === "Do at") {
           const attribute = /^(.+?)\s+@([^@]+)$/.exec(name);

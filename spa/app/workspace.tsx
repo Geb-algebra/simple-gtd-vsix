@@ -12,7 +12,7 @@ import { z } from "zod";
 import type { Route } from "./+types/workspace";
 import { loadWorkspace, changeWorkspace } from "./storage.client";
 import {
-  categories as allCategories,
+  categories,
   localDay,
   nextTasks,
   operationSchema,
@@ -199,8 +199,6 @@ export default function WorkspaceRoute({ loaderData, params }: Route.ComponentPr
   return <Workspace state={loaderData} screen={params.screen} />;
 }
 
-const extensionCategories = allCategories.filter((category) => category !== "Project");
-
 export function Workspace({
   state,
   screen,
@@ -210,8 +208,6 @@ export function Workspace({
   screen?: string;
   revision?: string;
 }) {
-  const categories: readonly Category[] =
-    revision === undefined ? allCategories : extensionCategories;
   const location = useLocation();
   const panel: Panel = screen === "log" ? "TADAs" : screen === undefined ? "Inbox" : "TODOs";
   const all = screen === "tasks";

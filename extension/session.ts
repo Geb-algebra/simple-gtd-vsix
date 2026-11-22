@@ -32,19 +32,18 @@ export class WorkspaceSession {
     let redo = this.redo;
     let createdProject = false;
 
-    if (operation.kind === "move" && operation.group === "Project") {
-      const task = current.tasks.find((item) => item.id === operation.id && item.group === "Inbox");
-      if (!task) throw new Error("This Inbox task is no longer available.");
-      const state = {
-        ...current,
-        tasks: current.tasks.filter((item) => item.id !== task.id),
-        undo: [],
-        redo: [],
-      };
-      next = editMarkdown(previous, current.tasks, state.tasks);
-      await project(task.name);
+    const projectTask =
+      operation.kind === "move" && operation.group === "Project"
+        ? current.tasks.find((task) => task.id === operation.id && task.group === "Inbox")
+        : undefined;
+    if (projectTask) {
+      result = applyOperation(current, operation, today, randomUUID);
+      if (result.state === current) return result.motion;
+      result.state.undo = [];
+      result.state.redo = [];
+      next = editMarkdown(previous, current.tasks, result.state.tasks);
+      await project(projectTask.name);
       createdProject = true;
-      result = { state, motion: null };
       undo = [];
       redo = [];
     } else {

@@ -1,7 +1,7 @@
 {
-  "name": "simple-gtd",
-  "displayName": "Simple GTD",
-  "version": "0.0.1",
+  "name": "simplegtd",
+  "displayName": "Simple GTD for Markdown",
+  "version": "0.0.2",
   "description": "Manage tasks in plain Markdown lists.",
   "license": "UNLICENSED",
   "publisher": "geb-algebra",
@@ -42,7 +42,7 @@
         "simpleGtd.projectCommand": {
           "type": "string",
           "default": "",
-          "scope": "application",
+          "scope": "resource",
           "description": "VS Code command ID called with { name, folderUri } to create a project from an Inbox task."
         }
       }

@@ -124,11 +124,19 @@ export async function activate(context: vscode.ExtensionContext) {
         today ?? localDay(),
         (next) => saveMarkdown(storage, markdown, next),
         async (name) => {
-          const command = vscode.workspace
-            .getConfiguration("simpleGtd")
-            .inspect<string>("projectCommand")
-            ?.globalValue?.trim();
-          if (!command) throw new Error("Set Simple GTD: Project Command in User Settings.");
+          const configuration = vscode.workspace.getConfiguration("simpleGtd", selected.uri);
+          const command = (
+            vscode.workspace.isTrusted
+              ? configuration.get<string>("projectCommand")
+              : configuration.inspect<string>("projectCommand")?.globalValue
+          )?.trim();
+          if (!command) {
+            throw new Error(
+              vscode.workspace.isTrusted
+                ? "Set Simple GTD: Project Command in User, Remote, or Workspace Settings."
+                : "Set Simple GTD: Project Command in User Settings or trust this workspace to use its setting.",
+            );
+          }
           const result = await vscode.commands.executeCommand(command, { name, folderUri: key });
           if (result === false) throw new Error("The project command did not create a project.");
         },

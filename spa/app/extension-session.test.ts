@@ -61,7 +61,7 @@ describe("VS Code workspace session", () => {
     ]);
   });
 
-  it("keeps the Inbox item on command or save failure", async () => {
+  it("moves the Inbox item into Project only after command and save success", async () => {
     const { session, change, save, project } = setup();
     const operation = { kind: "move", id: session.state.tasks[0].id, group: "Project" } as const;
     const revision = session.revision;
@@ -72,10 +72,13 @@ describe("VS Code workspace session", () => {
     await expect(change(operation)).rejects.toThrow("Project command ran");
     expect(session.markdown).toEqual(original);
     expect(session.revision).toBe(revision);
-    await change(operation);
+    await expect(change(operation)).resolves.toMatchObject({ from: "Inbox", to: "Project" });
     expect(project).toHaveBeenLastCalledWith("Same");
     expect(session.markdown["inbox.md"]).toBe("\uFEFF<!-- note -->\r\n- Same\r\n");
     await change({ kind: "undo" });
-    expect(session.state.tasks.some((task) => task.id === operation.id)).toBe(false);
+    expect(session.state.tasks.find((task) => task.id === operation.id)?.group).toBe("Project");
+    expect(new WorkspaceSession(session.markdown).state.tasks).toContainEqual(
+      expect.objectContaining({ name: "Same", group: "Project" }),
+    );
   });
 });
