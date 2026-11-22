@@ -7,13 +7,15 @@ Simple GTD brings a Markdown-backed task inbox, a next-action list, and a comple
 ## Get started
 
 1. Open a folder in VS Code and select **Simple GTD** in the Activity Bar.
-2. Click **+** in **Inbox**, type a task, and press **Enter**. You can add to Inbox while another panel is open.
+2. Click **+** above **Inbox**, type a task, and press **Enter**. The button stays available while you work in **TODOs** or **TADAs**.
 3. Open **Inbox** to process the top card. With focus outside an input, press **Enter** to move it to **Next Actions**. Click its checkbox when the task is complete.
 
 ## Manage tasks in the sidebar
 
+The sidebar keeps all three panels visible. Click a closed panel's header or preview to open it and use its controls.
+
 - **Inbox** shows the next task to process. Use the calendar or person icon to schedule it or mark it as waiting for someone.
-- **TODOs** opens the **Next Actions** stack. Use the arrow above the stack to move its top card to the bottom. Switch to **All** to edit, reorder, or drag tasks between lists.
+- **TODOs** opens the **Next Actions** stack. Use the arrow above the stack to move its top card to the bottom. Switch to **All** to see tasks grouped by category, edit their names, reorder them, or drag them between lists.
 - **TADAs** shows completed work on a heatmap. Select a day to see the tasks you finished.
 
 ## Your tasks are Markdown files

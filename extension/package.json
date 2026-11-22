@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "description": "Manage tasks in plain Markdown lists.",
   "license": "UNLICENSED",
-  "publisher": "simple-gtd",
+  "publisher": "geb-algebra",
+  "icon": "icon.png",
   "main": "./dist/extension.cjs",
   "scripts": {
     "build": "cd ../spa && bun x vite build --config vite.webview.config.ts && cd ../extension && bun build extension.ts --target=node --format=cjs --external vscode --outfile dist/extension.cjs",

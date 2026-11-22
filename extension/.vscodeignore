@@ -1,4 +1,6 @@
 **
 !package.json
 !icon.svg
+!icon.png
+!THIRD_PARTY_NOTICES.md
 !dist/**

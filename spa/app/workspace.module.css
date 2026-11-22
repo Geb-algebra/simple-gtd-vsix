@@ -9,7 +9,6 @@
   display: grid;
   grid-template-columns: minmax(0, min(100%, var(--panel-width)));
   justify-content: center;
-  grid-template-rows: auto auto auto;
   gap: var(--gap);
   height: 100dvh;
   padding: var(--gap);
@@ -17,15 +16,21 @@
 }
 
 .workspace[data-active="Inbox"] {
-  grid-template-rows: minmax(10rem, 1fr) auto auto;
+  grid-template-rows: auto minmax(10rem, 1fr) auto auto;
 }
 
 .workspace[data-active="TODOs"] {
-  grid-template-rows: auto minmax(10rem, 1fr) auto;
+  grid-template-rows: auto auto minmax(10rem, 1fr) auto;
 }
 
 .workspace[data-active="TADAs"] {
-  grid-template-rows: auto auto minmax(10rem, 1fr);
+  grid-template-rows: auto auto auto minmax(10rem, 1fr);
+}
+
+.workspace,
+.panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-page) transparent;
 }
 
 .panel {
@@ -64,20 +69,6 @@
   outline-offset: -2px;
 }
 
-.collapsedPanel:has(.collapsedHeading:hover) {
-  background: var(--color-wash);
-}
-
-.collapsedPanel .addArea {
-  margin-block: 0;
-}
-
-.collapsedPanel .addButton,
-.collapsedPanel .addForm {
-  position: relative;
-  z-index: 2;
-}
-
 .panelPreview {
   width: min(100%, var(--card-width));
   margin-inline: auto;
@@ -89,11 +80,6 @@
 
 .panelPreview .heatCard {
   padding: 0.5rem;
-}
-
-.nextPreview {
-  display: block;
-  margin-top: 0.75rem;
 }
 
 .panelHeading {
@@ -130,14 +116,14 @@
   font-weight: 700;
 }
 
-.addArea,
 .list,
 .stackLayout {
   width: min(100%, var(--card-width));
   margin-inline: auto;
 }
 .addArea {
-  margin-block: clamp(2rem, 9vh, 7rem) 0.7rem;
+  width: min(var(--card-width), calc(100% - 2 * (var(--panel-padding) + 1px)));
+  margin-inline: auto;
 }
 .addButton,
 .addForm {
@@ -177,6 +163,9 @@
   min-height: 2rem;
   margin-top: 0.5rem;
   padding-inline: 0.5rem;
+}
+[data-active="Inbox"] .panel .stackLayout {
+  margin-top: 0.75rem;
 }
 [data-active="TODOs"] .stackLayout {
   margin-top: clamp(2rem, 9vh, 7rem);
@@ -368,14 +357,8 @@
   margin: 1rem auto;
   max-width: var(--card-width);
 }
-.flight,
-.confetti {
+.flight {
   position: fixed;
   z-index: 20;
   pointer-events: none;
-}
-.confetti {
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }

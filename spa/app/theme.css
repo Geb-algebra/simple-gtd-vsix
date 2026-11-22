@@ -7,6 +7,7 @@
   --color-card-line: oklch(0.92 0.019 236.36);
   --color-line: oklch(0.84 0.035 236.36);
   --color-panel: oklch(0.977 0.009 236.36);
+  --color-page: oklch(0.931 0.018 236.36);
   --color-wash: oklch(0.938 0.03 236.36);
   --color-background: white;
   --color-foreground: var(--color-ink);
@@ -31,7 +32,7 @@ body {
 
 @layer base {
   body {
-    background: oklch(0.931 0.018 236.36);
+    background: var(--color-page);
     color: var(--color-ink);
   }
   button:not(:disabled),

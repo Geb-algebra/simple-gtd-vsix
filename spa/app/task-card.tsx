@@ -175,6 +175,7 @@ export function AttributeInput({
 
 export function TaskCard({
   task,
+  arriving,
   edit,
   onEdit,
   onClose,
@@ -186,6 +187,7 @@ export function TaskCard({
   disabled,
 }: {
   task: Task;
+  arriving?: boolean;
   edit?: Edit;
   onEdit?: (edit: Edit) => void;
   onClose?: () => void;
@@ -207,7 +209,7 @@ export function TaskCard({
     <article
       ref={card}
       data-task={task.id}
-      className={cardClass}
+      className={arriving ? `${cardClass} invisible` : cardClass}
       onDragOver={
         onDrop
           ? (event) => {

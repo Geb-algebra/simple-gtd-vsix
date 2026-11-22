@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+} from "react";
 import { Link, data, useFetcher, useLocation } from "react-router";
 import { ArrowLeft, ChevronDown, CircleCheck, Inbox, ListTodo, Plus, Redo } from "lucide-react";
 import { z } from "zod";
@@ -26,7 +33,7 @@ import {
   type Edit,
   type Submit,
 } from "./task-card";
-import { Confetti, Flight, flightDuration, reducedMotion, type Motion } from "./motion";
+import { Flight, reducedMotion, type Motion } from "./motion";
 import { Log } from "./log";
 import styles from "./workspace.module.css";
 
@@ -62,17 +69,27 @@ const panels = {
 } satisfies Record<Panel, { url: string; Icon: typeof Inbox }>;
 const dragType = "application/x-simple-gtd-task";
 
-const panelSurface = "rounded-xl border border-line bg-panel";
+const panelSurface = "rounded-xl border border-line";
 
 const panelOrder = ["Inbox", "TODOs", "TADAs"] as const;
 
-function StackPreview({ tasks, empty }: { tasks: Task[]; empty: string }) {
+function StackPreview({
+  tasks,
+  empty,
+  arrivingId,
+}: {
+  tasks: Task[];
+  empty: string;
+  arrivingId?: string;
+}) {
   const head = tasks[0];
   return (
     <div className={styles.panelPreview} aria-hidden="true">
       <div className={styles.stack} data-depth={Math.min(3, tasks.length)}>
         {head ? (
-          <FlightCard name={head.name} checked={false} />
+          <div className={head.id === arrivingId ? "invisible" : undefined}>
+            <FlightCard name={head.name} checked={false} />
+          </div>
         ) : (
           <p className={`${styles.empty} text-muted`}>{empty}</p>
         )}
@@ -86,7 +103,7 @@ function CollapsedPanel({ panel, children }: { panel: Panel; children: React.Rea
   return (
     <section
       data-panel={panel}
-      className={`${styles.collapsedPanel} ${panelSurface}`}
+      className={`${styles.collapsedPanel} ${panelSurface} hover:bg-panel hover:shadow-lg motion-safe:transition-[background-color,box-shadow] motion-safe:duration-200`}
     >
       <Link to={url} className={`${styles.collapsedHeading} text-xl font-bold`}>
         <Icon size={21} aria-hidden="true" />
@@ -162,7 +179,7 @@ function AddTask({
             type="button"
             disabled={disabled}
             aria-label="Add task"
-            className={`${styles.addButton} rounded-lg border border-dashed border-line bg-panel hover:bg-wash focus-visible:outline-2`}
+            className={`${styles.addButton} rounded-lg border border-dashed border-line bg-transparent hover:bg-panel focus-visible:outline-2`}
             onClick={() => {
               cancelled.current = false;
               setHasName(false);
@@ -204,13 +221,13 @@ export function Workspace({
   const [completing, setCompleting] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [motion, setMotion] = useState<Motion>();
-  const [celebration, setCelebration] = useState<{ token: number; areas: DOMRect[] }>();
+  const [arrivedToken, setArrivedToken] = useState<number>();
+  const arrivingId = motion && motion.token !== arrivedToken ? motion.transition.id : undefined;
   const fetcher = useFetcher<typeof clientAction>();
-  const change = useRef<{ source?: DOMRect; empty?: DOMRect } | undefined>(undefined);
+  const change = useRef<{ source?: DOMRect } | undefined>(undefined);
   const locking = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const token = useRef(0);
-  const celebrationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inbox = state.tasks.filter((task) => task.group === "Inbox");
   const next = nextTasks(state, today);
   const stack = panel === "Inbox" ? inbox : next;
@@ -229,7 +246,6 @@ export function Workspace({
   useEffect(
     () => () => {
       clearTimeout(timer.current);
-      clearTimeout(celebrationTimer.current);
     },
     [],
   );
@@ -250,9 +266,9 @@ export function Workspace({
     return node?.getBoundingClientRect();
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (fetcher.state !== "idle" || !fetcher.data || !change.current) return;
-    const { source, empty } = change.current;
+    const { source } = change.current;
     const transition = fetcher.data.transition;
     change.current = undefined;
     locking.current = false;
@@ -282,19 +298,6 @@ export function Workspace({
     const end = target ?? start;
     const key = ++token.current;
     if (start && end) setMotion({ start, end, impact, transition, token: key });
-    const areas: DOMRect[] = [];
-    if (transition.to === "Done") {
-      const logPanel = position("Done");
-      if (logPanel) areas.push(logPanel);
-    }
-    if (empty) areas.push(empty);
-    if (areas.length) {
-      clearTimeout(celebrationTimer.current);
-      celebrationTimer.current = setTimeout(
-        () => setCelebration({ token: key, areas }),
-        flightDuration,
-      );
-    }
   }, [fetcher.data, fetcher.state]);
 
   const submit: Submit = (operation, element) => {
@@ -313,25 +316,7 @@ export function Workspace({
       element?.getBoundingClientRect() ??
       (task && position(task.group, task.id)) ??
       (history ? position(operation.kind === "undo" ? history.to : history.from) : undefined);
-    const removesInboxHead =
-      (operation.kind === "redo" && history?.from === "Inbox") ||
-      (operation.kind === "undo" && history?.from === "Add");
-    const empty =
-      !all &&
-      panel !== "TADAs" &&
-      head &&
-      stack.length === 1 &&
-      (removesInboxHead ||
-        (head.id === task?.id &&
-          (operation.kind === "done" ||
-            (operation.kind === "move" &&
-              operation.group !== head.group &&
-              (panel === "Inbox" ||
-                (operation.group !== "Next Actions" &&
-                  !(operation.group === "Do at" && operation.date === today)))))))
-        ? position(panel === "Inbox" ? "Inbox" : "Defer", head.id)
-        : undefined;
-    change.current = { source, empty };
+    change.current = { source };
     const send = () =>
       fetcher.submit(revision === undefined ? operation : { operation, revision, today }, {
         method: "post",
@@ -444,6 +429,7 @@ export function Workspace({
       <TaskCard
         key={task.id}
         task={task}
+        arriving={task.id === arrivingId}
         edit={edit?.id === task.id ? edit : undefined}
         onEdit={setEdit}
         onClose={() => setEdit(undefined)}
@@ -501,26 +487,28 @@ export function Workspace({
   );
 
   const heading = panels[panel];
-  const addTask = (
-    <AddTask open={adding} setOpen={setAdding} disabled={disabled} submit={submit} />
-  );
   return (
     <div className={styles.workspace} data-active={panel}>
+      <AddTask open={adding} setOpen={setAdding} disabled={disabled} submit={submit} />
       {panelOrder.map((item) =>
         item !== panel ? (
           <CollapsedPanel key={item} panel={item}>
-            {item === "Inbox" && addTask}
             {item === "TADAs" ? (
               <Log tasks={state.tasks} today={today} />
             ) : (
               <StackPreview
                 tasks={item === "Inbox" ? inbox : next}
+                arrivingId={arrivingId}
                 empty={item === "Inbox" ? "Inbox is empty" : "No next actions"}
               />
             )}
           </CollapsedPanel>
         ) : (
-          <main key={item} className={`${styles.panel} ${panelSurface}`} data-panel={item}>
+          <main
+            key={item}
+            className={`${styles.panel} ${panelSurface} bg-panel shadow-lg`}
+            data-panel={item}
+          >
             <div className={styles.panelHeading}>
               <h1 className="text-xl font-bold">
                 <heading.Icon size={21} aria-hidden="true" />
@@ -545,63 +533,52 @@ export function Workspace({
             {panel === "TADAs" ? (
               <Log tasks={state.tasks} today={today} renderCard={renderCard} />
             ) : all ? (
-              <>
-                <Link to="/next" className={styles.nextPreview} aria-label="Next Actions">
-                  <StackPreview tasks={next} empty="No next actions" />
-                </Link>
-                {list}
-              </>
+              list
             ) : (
-              <>
-                {panel === "Inbox" && addTask}
-                <div className={styles.stackLayout}>
-                  {panel === "TODOs" && head && (
-                    <IconButton
-                      label="Move to bottom"
-                      disabled={disabled}
-                      onClick={() => submit({ kind: "defer", id: head.id })}
-                    >
-                      <Redo size={21} />
-                    </IconButton>
-                  )}
-                  <div
-                    className={styles.stack}
-                    data-motion={panel === "Inbox" ? "Inbox" : "Defer"}
-                    data-depth={Math.min(3, stack.length)}
+              <div className={styles.stackLayout}>
+                {panel === "TODOs" && head && (
+                  <IconButton
+                    label="Move to bottom"
+                    disabled={disabled}
+                    onClick={() => submit({ kind: "defer", id: head.id })}
                   >
-                    {head ? (
-                      renderCard(head)
-                    ) : (
-                      <p className={`${styles.empty} text-muted`}>
-                        {panel === "Inbox" ? "Inbox is empty" : "No next actions"}
-                      </p>
-                    )}
-                  </div>
-                  {panel === "Inbox" && head && (
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      className={cn(
-                        styles.projectButton,
-                        iconClass,
-                        "rounded-lg text-base font-normal",
-                      )}
-                      onClick={() => routeInbox("Project")}
-                    >
-                      <ArrowLeft size={16} aria-hidden="true" />
-                      Project
-                    </button>
+                    <Redo size={21} />
+                  </IconButton>
+                )}
+                <div
+                  className={styles.stack}
+                  data-motion={panel === "Inbox" ? "Inbox" : "Defer"}
+                  data-depth={Math.min(3, stack.length)}
+                >
+                  {head ? (
+                    renderCard(head)
+                  ) : (
+                    <p className={`${styles.empty} text-muted`}>
+                      {panel === "Inbox" ? "Inbox is empty" : "No next actions"}
+                    </p>
                   )}
                 </div>
-              </>
+                {panel === "Inbox" && head && (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    className={cn(
+                      styles.projectButton,
+                      iconClass,
+                      "rounded-lg text-base font-normal",
+                    )}
+                    onClick={() => routeInbox("Project")}
+                  >
+                    <ArrowLeft size={16} aria-hidden="true" />
+                    Project
+                  </button>
+                )}
+              </div>
             )}
           </main>
         ),
       )}
-      {motion && <Flight key={motion.token} motion={motion} />}
-      {celebration?.areas.map((area, index) => (
-        <Confetti key={`${celebration.token}-${index}`} area={area} />
-      ))}
+      {motion && <Flight key={motion.token} motion={motion} onArrival={setArrivedToken} />}
     </div>
   );
 }
