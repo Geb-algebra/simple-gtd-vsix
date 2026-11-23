@@ -30,6 +30,21 @@ function visibleLines(lines: string[]) {
   });
 }
 
+type Position = { line: number; character: number };
+
+export function selectedListItems(source: string, start: Position, end: Position): string[] {
+  const lines = visibleLines(source.split(/\r?\n/));
+  const names: string[] = [];
+  for (let index = start.line; index <= end.line; index++) {
+    const line = lines[index].slice(0, index === end.line ? end.character : undefined);
+    const item = /^([ \t]*)(?:[-*+]|\d{1,9}[.)])[ \t]+(.+)$/.exec(line);
+    if (!item || (index === start.line && start.character > item[1].length)) continue;
+    const name = item[2].trim().replace(/^\[[ xX]\](?:[ \t]+|$)/, "");
+    if (name) names.push(name);
+  }
+  return names;
+}
+
 export function readTasks(markdown: Markdown, today = localDay()): State {
   const tasks: Task[] = [];
   for (const file of files) {

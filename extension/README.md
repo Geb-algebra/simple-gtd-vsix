@@ -10,6 +10,8 @@ Simple GTD brings a Markdown-backed task inbox, a next-action list, and a comple
 2. Click **+** above **Inbox**, type a task, and press **Enter**. The button stays available while you work in **TODOs** or **TADAs**.
 3. Open **Inbox** to process the top card. With focus outside an input, press **Enter** to move it to **Next Actions**. Click its checkbox when the task is complete.
 
+To capture several tasks at once, select Markdown list items in the editor, including their list markers, then right-click and choose **Simple GTD: Add Selected List Items to Inbox**. Each selected bullet, numbered item, or checklist item becomes a separate Inbox task in selection order.
+
 ## Manage tasks in the sidebar
 
 The sidebar keeps all three panels visible. Click a closed panel's header or preview to open it and use its controls.

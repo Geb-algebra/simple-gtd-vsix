@@ -1,7 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { editMarkdown, initialMarkdown, readTasks } from "../../extension/markdown";
+import { editMarkdown, initialMarkdown, readTasks, selectedListItems } from "../../extension/markdown";
 
 describe("workspace Markdown", () => {
+  it("captures selected list markers in order and skips prose and fenced code", () => {
+    const source = [
+      "```md",
+      "- Inside the fence",
+      "```",
+      "## Heading",
+      "- First",
+      "  * [x] Nested",
+      "  Continuation",
+      "2. Numbered",
+      "+ Last",
+      "- Outside the selection",
+    ].join("\r\n");
+    expect(
+      selectedListItems(source, { line: 1, character: 0 }, { line: 9, character: 0 }),
+    ).toEqual(["First", "Nested", "Numbered", "Last"]);
+    expect(
+      selectedListItems(source, { line: 4, character: 2 }, { line: 5, character: 14 }),
+    ).toEqual(["Nested"]);
+  });
+
   it("reads the three files as plain lists in file order", () => {
     const state = readTasks(
       {

@@ -1,7 +1,7 @@
 {
   "name": "simplegtd",
   "displayName": "Simple GTD for Markdown",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Manage tasks in plain Markdown lists.",
   "license": "UNLICENSED",
   "publisher": "geb-algebra",
@@ -34,8 +34,22 @@
       {
         "command": "simpleGtd.selectFolder",
         "title": "Simple GTD: Select Workspace Folder"
+      },
+      {
+        "command": "simpleGtd.addSelectionToInbox",
+        "title": "Simple GTD: Add Selected List Items to Inbox",
+        "enablement": "editorLangId == markdown && editorHasSelection"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "simpleGtd.addSelectionToInbox",
+          "when": "editorLangId == markdown && editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Simple GTD",
       "properties": {
